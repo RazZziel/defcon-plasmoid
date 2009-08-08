@@ -1,9 +1,8 @@
 [Desktop Entry]
 Name=Defcon
-Comment=yo dawg
+Comment=DEFCON level indicator
 Type=Service
 X-KDE-ServiceTypes=Plasma/Applet
-NoDisplay=true
 
 X-KDE-Library=plasma_applet_defcon
 X-KDE-PluginInfo-Author=Ismael Barros
@@ -11,10 +10,7 @@ X-KDE-PluginInfo-Email=razielmine@gmail.com
 X-KDE-PluginInfo-Name=defcon
 X-KDE-PluginInfo-Version=0.1
 X-KDE-PluginInfo-Website=http://plasma.kde.org/
-X-KDE-PluginInfo-Category=Date and Time
+X-KDE-PluginInfo-Category=System Information
 X-KDE-PluginInfo-Depends=
 X-KDE-PluginInfo-License=GPL
 X-KDE-PluginInfo-EnabledByDefault=true
-
-X-Plasma-Requires-FileDialog=Unused
-X-Plasma-Requires-LaunchApp=Required

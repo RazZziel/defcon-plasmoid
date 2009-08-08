@@ -29,9 +29,11 @@ PlasmaDefcon::PlasmaDefcon(QObject *parent, const QVariantList &args)
 {
     m_svg.setImagePath("widgets/defcon");
     setBackgroundHints(DefaultBackground);
+
+    resize( m_svg.size() );
+
     setHasConfigurationInterface(true);
-    // setAspectRatioMode(Plasma::ConstrainedSquare);
-    resize(300, 600);
+    setAspectRatioMode(Plasma::IgnoreAspectRatio);
 }
 
 
@@ -54,7 +56,7 @@ void PlasmaDefcon::init()
 void PlasmaDefcon::dataUpdated(const QString& source,
                                const Plasma::DataEngine::Data &data)
 {
-    qDebug() << source << "=>" << data;
+    //qDebug() << source << "=>" << data;
 
     bool ok;
     int level = data["stdout"].toString().trimmed().toInt( &ok );
@@ -78,6 +80,8 @@ void PlasmaDefcon::paintInterface(QPainter *p,
     QPointF zero = m_svg.elementRect("g2439").topLeft() - contentsRect.topLeft();
 
     m_svg.paint(p, contentsRect, "g2439");
+
+    m_svg.paint(p, m_svg.elementRect("g2447").translated(-zero), "g2447");
 
     switch( m_level )
     {
