@@ -1,13 +1,35 @@
+/***********************************************************************************
+* Adjustable Clock: DEFCON level indicator for your KDE desktop.
+* Copyright (C) 2009 Ismael Barros (RazZziel) <razielmine@gmail.com>
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 2
+* of the License, or (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*
+***********************************************************************************/
+
 #include "defcon.h"
 #include <QtDebug>
 
 PlasmaDefcon::PlasmaDefcon(QObject *parent, const QVariantList &args)
     : Plasma::Applet(parent, args),
       m_svg(this),
-      m_level(5)
+      m_level(5),
+      m_engine(dataEngine("executable"))
 {
     m_svg.setImagePath("widgets/defcon");
     setBackgroundHints(DefaultBackground);
+    setHasConfigurationInterface(true);
     // setAspectRatioMode(Plasma::ConstrainedSquare);
     resize(300, 600);
 }
@@ -24,20 +46,15 @@ PlasmaDefcon::~PlasmaDefcon()
 
 void PlasmaDefcon::init()
 {
-    loadConfig();
-    connectToEngine();
-}
+    KConfigGroup configuration = config();
 
-void PlasmaDefcon::connectToEngine()
-{
-    Plasma::DataEngine *engine = dataEngine("executable");
-    engine->connectSource( "echo $((RANDOM%5+1))", this, 1000 );
+    loadConfig();
 }
 
 void PlasmaDefcon::dataUpdated(const QString& source,
                                const Plasma::DataEngine::Data &data)
 {
-    qDebug() << data;
+    qDebug() << source << "=>" << data;
 
     bool ok;
     int level = data["stdout"].toString().trimmed().toInt( &ok );
@@ -88,67 +105,53 @@ void PlasmaDefcon::paintInterface(QPainter *p,
 
 void PlasmaDefcon::createConfigurationInterface(KConfigDialog *parent)
 {
-    // appearance_dialog = new AppearanceDialog();
-    // appearance_dialog->checkTrayIconSize->setChecked(cfg_tray_icon_size);
-    // appearance_dialog->selFontFamily->setCurrentFont(cfg_font);
+    KConfigGroup configuration = config();
 
-    // config_dialog = new ConfigDialog();
-    // config_dialog->loadAccounts(accounts);
+    QWidget *config_dialog = new QWidget;
+    m_configUi.setupUi(config_dialog);
 
-    // parent->addPage(appearance_dialog, tr2i18n("Appearance"), "preferences-desktop-theme");
-    // parent->addPage(config_dialog, tr2i18n("Accounts"), "mail-message");
+    m_configUi.command->setText( m_command );
+    m_configUi.pollingInterval->setValue( m_pollingInterval );
 
-    // connect(parent, SIGNAL( okClicked() ), this, SLOT( saveConfig() ));
-    // connect(parent, SIGNAL( finished() ), this, SLOT( startMailCheckers() ));
+    parent->addPage(config_dialog, "General", "preferences-other");
+
+    connect(parent, SIGNAL( okClicked() ), this, SLOT( updateConfig() ));
 }
 
 void PlasmaDefcon::loadConfig()
 {
-    // KConfigGroup cfg = config();
+    KConfigGroup configuration = config();
 
-    // cfg_tray_icon_size = cfg.readEntry("tray_icon_size", false);
-    // cfg_font.setFamily(cfg.readEntry("font_family", font().family()));
+    m_command = configuration.readEntry("command", DEFAULT_COMMAND);
+    m_pollingInterval = configuration.readEntry("pollingInterval", DEFAULT_INTERVAL);
 
-    // KConfigGroup cfg_accounts(&cfg, "Accounts");
-
-    // QStringList account_ids = cfg_accounts.groupList();
-    // account_ids.sort();
-
-    // for (int i = 0; i < account_ids.count(); ++i) {
-    //     Account * account = new Account(new KConfigGroup(&cfg_accounts, account_ids.value(i)));
-
-    //     if (account->name.isEmpty()) delete account;
-    //     else accounts.push_back(account);
-    // }
+    m_engine->connectSource( m_command, this, m_pollingInterval*1000 );
 }
 
-void PlasmaDefcon::saveConfig()
+void PlasmaDefcon::updateConfig()
 {
-    // KConfigGroup cfg = config();
+    KConfigGroup configuration = config();
 
-    // cfg_tray_icon_size = appearance_dialog->checkTrayIconSize->isChecked();
-    // cfg.writeEntry("tray_icon_size", cfg_tray_icon_size);
-    // cfg_font.setFamily(appearance_dialog->selFontFamily->currentFont().family());
-    // cfg.writeEntry("font_family", cfg_font.family());
+    m_engine->disconnectSource( m_command, this );
 
-    // KConfigGroup cfg_accounts(&cfg, "Accounts");
-    // cfg_accounts.deleteGroup();
+    m_command = m_configUi.command->text().trimmed();
+    m_pollingInterval = m_configUi.pollingInterval->value();
 
-    // dropAccounts();
+    if (m_command.length() == 0)
+    {
+        m_command = DEFAULT_COMMAND;
+    }
+    if (m_pollingInterval == 0)
+    {
+        m_pollingInterval = DEFAULT_INTERVAL;
+    }
 
-    // for (int i = 0; i < config_dialog->listAccounts->count(); ++i) {
-    //     KConfigGroup cfg_account(&cfg_accounts, QString::number(i));
-    //     Account * account = new Account(((ListAccountItem *) config_dialog->listAccounts->item(i))->account);
-    //     account->saveConfiguration(&cfg_account);
-    //     accounts.push_back(account);
-    // }
+    m_engine->connectSource( m_command, this, m_pollingInterval*1000 );
 
-    // cfg.sync();
+    configuration.writeEntry("command", m_command);
+    configuration.writeEntry("pollingInterval", m_pollingInterval);
 
-    // createMailCheckers();
-    // messages_dialog->createAccountItems(mail_checkers);
-
-    // update();
+    emit configNeedsSaving();
 }
 
 
