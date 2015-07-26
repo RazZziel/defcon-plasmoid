@@ -1,6 +1,8 @@
 [Desktop Entry]
-Name=Defcon
+Encoding=UTF-8
+Name=defcon-plasmoid
 Comment=DEFCON level indicator
+Comment[es]=Indicaor de nivel DEFCON
 Type=Service
 X-KDE-ServiceTypes=Plasma/Applet
 
